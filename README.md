@@ -192,3 +192,24 @@ actual business calls and retains the native envelopes alongside them. Forced
 boundary checks and model calls are recorded separately.
 
 AI-led development: Codex / blucca. Source and documentation: [MIT](LICENSE).
+
+## Cash Desk interoperability (v0.1.2, ID-only mode)
+
+Cash Desk determines the invoice figures; SourceBind checks which current
+customer receives the action. The [real native dispatcher record](demo/native-cashdesk.json)
+uses Cash Desk's bundled fictional customers, pin
+`26d5fabe5f50f250e5dc72c0751adbdb3625f732` (MIT, FutureInvoked).
+
+- An unbound dispute reply with valid `C002` really places that wrong customer on hold.
+- Default two-field mode stops on Cash Desk's missing `job` argument.
+- Explicit ID-only mode blocks wrong `C002`, accepts current `C001`, and follows
+  a current-source rollover to `C003`. SQLite reads verify the customer effects.
+- Broken JSON and a changed source job stop the call; repairing restores a ready read.
+
+Eleven stock `tool_call` dispatcher calls; model turns, outbound sends and
+invoice/bank imports: **0**. SourceBind v0.1.2 installed-tree validation passes
+all 15 checks on Hermes v0.23.0. For a fresh dedicated demo profile, install
+and enable both plugins and run the [standalone dispatcher checker](https://github.com/blucca/n8n-check/blob/25a620ff65adb5675faac6b9ed2d92e9aa6b011f/experiments/hermes-sourcebind-native/cashdesk-id-only-native.py)
+with the Hermes Python environment, `--hermes /path/to/hermes-agent` and
+`--output-dir /your/workspace/temp/cashdesk-demo`. The checker is standalone
+research; SourceBind itself registers through public Hermes plugin APIs.
