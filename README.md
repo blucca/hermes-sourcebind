@@ -109,6 +109,8 @@ The plugin uses public registration and state APIs.
 [Open the recorded native run](https://blucca.github.io/hermes-sourcebind/demo/)
 — fictional customers, real Hermes tool calls.
 
+![Current source, native block and the model’s Northwind update](demo/cover-native.png)
+
 
 The standalone `examples/native-demo.py` harness runs a real Hermes agent and
 its native tool dispatcher. It uses your configured model, creates a fictional
