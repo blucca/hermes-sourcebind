@@ -2,8 +2,9 @@
 
 Two valid customer IDs can both return success. A renewal job for Northwind can
 still update Contoso. SourceBind binds an explicit job to its **current local
-JSON source**, then checks the actual `job` and `customer_id` immediately before
-one selected tool runs.
+JSON source**, then, by default, checks the actual `job` and `customer_id`
+immediately before one selected tool runs. Explicit `id-only` mode supports
+customer-only tools, with the job bound to the native scope and selected source.
 
 ## Try it in 30 seconds
 
@@ -51,7 +52,8 @@ the standard library.
 
 | User command | Effect |
 | --- | --- |
-| `/sourcebind bind <job> <source.json> [protected_tool]` | Select the current source and one tool; default: `sourcebind_demo_update`. |
+| `/sourcebind bind <job> <source.json> [protected_tool]` | Check both call arguments against the current source; default tool: `sourcebind_demo_update`. |
+| `/sourcebind bind <job> <source.json> <protected_tool> id-only` | Explicitly check `customer_id` for a customer-only tool; job stays bound to the native scope/source. |
 | `/sourcebind status` | Show the binding for this native scope. |
 | `/sourcebind clear` | Clear this scope's active binding. |
 
@@ -84,6 +86,46 @@ Choose an already-registered tool with top-level string arguments `job` and
 `customer_id`. The check applies to that exact tool name and these two fields.
 Selecting it replaces the default fixture as the protected target. Other tools,
 arguments, backend effects, and Hermes approvals keep their existing contracts.
+Default mode checks both fields on every protected call. Existing v0.1.1
+bindings retain this default when reloaded.
+
+### ID-only mode for customer-only tools
+
+Use `id-only` for an already-registered tool whose schema has a top-level string
+`customer_id` and omits `job`, such as Cash Desk's `cashdesk_reply` or
+`cashdesk_hold`. The flag is accepted only after an explicit protected tool name.
+The selected source still requires the canonical `job` and `customer_id` fields:
+
+```json
+{"job":"northwind-reply","customer_id":"<your-current-customer-id>"}
+```
+
+Bind that file and the exact native tool in your Hermes conversation:
+
+```text
+/sourcebind bind northwind-reply "/absolute/path/current source.json" cashdesk_reply id-only
+```
+
+In this mode, the job is enforced by the explicit native scoped binding and
+`source.job == bound job` at every protected call. Tool arguments are checked
+against the current `customer_id`. A changed source job or source read failure
+blocks the call, and a customer-ID rollover immediately changes the accepted ID.
+The one-profile, one-active-binding, one-exact-tool scope applies to both modes.
+
+`sourcebind_current` exposes both source fields in `current` and only the checked
+tool fields in `expected_args`. Its `next_step` supplies the current customer ID;
+other required tool arguments come from your task. For `cashdesk_reply`, use
+native arguments like these, replacing the placeholders with the selected ID
+and the customer's reply text:
+
+```json
+{"customer_id":"<your-current-customer-id>","text":"<customer reply text from your task>"}
+```
+
+The `text` argument keeps Cash Desk's native task contract. SourceBind adds the
+current-source identity check; Cash Desk's other arguments and approvals retain
+their own contracts. Rebinding without `id-only` selects the default two-field
+argument guard.
 
 The selected file is the authority at call time. When shell or file tools have
 write permission to it, those tools can change the authoritative values that
@@ -95,7 +137,7 @@ who may change the business mapping.
 | Surface | Behaviour |
 | --- | --- |
 | Reads outside plugin data | The explicitly selected local business JSON, using the Hermes process's OS file permissions. Source-content fields exposed to the model: `job` and `customer_id`. |
-| Stored data | Profile-scoped Hermes `ctx.state`: binding with absolute source path and scope, native scope aliases, and fictional demo records. `clear` removes the active binding. |
+| Stored data | Profile-scoped Hermes `ctx.state`: binding with absolute source path, scope and `check_job_arg` mode flag, native scope aliases, and fictional demo records. `clear` removes the active binding. |
 | Third-party network requests / telemetry | 0 plugin-initiated requests; 0 telemetry. |
 | Shell commands / background processes | 0 plugin-initiated commands; 0 background processes. |
 | Credentials | 0 requested or stored; 0 credential-store discovery. |
@@ -104,7 +146,7 @@ who may change the business mapping.
 `pre_tool_call` enforces the binding; `pre_llm_call` supplies scoped guidance.
 The plugin uses public registration and state APIs.
 
-## Native demonstration
+## Native demonstration (v0.1.1, default mode)
 
 [Watch the 71-second film](https://blucca.github.io/hermes-sourcebind/demo/#film)
 or [download the MP4](demo/sourcebind-demo.mp4). The film includes English
@@ -133,9 +175,11 @@ The forced stale calls exercise the native execution boundary; the agent turns
 use the configured model. The harness imports Hermes core for the demonstration;
 the plugin entrypoint extends Hermes through the public `ctx` APIs.
 
-Standard-library checks: `python3 tests/check.py` — 12 checks pass. Current
-Hermes v0.23.0 validation passes, including the safe install scan. The observed
-v0.1.1 native model run is saved in [demo/native-demo.json](demo/native-demo.json):
+Standard-library checks: `python3 tests/check.py` — 16 checks pass, including
+default/legacy bindings and the explicit ID-only guard and guidance. The
+v0.1.1 default-mode Hermes v0.23.0 validation passed, including the safe install
+scan. Its observed native model run is saved in
+[demo/native-demo.json](demo/native-demo.json):
 
 - Unbound: valid `ct-91` updates Contoso for the Northwind job.
 - Bound: wrong customer/job calls stop; the model reads the selected source and

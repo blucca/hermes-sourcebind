@@ -13,7 +13,7 @@ from pathlib import Path
 DEFAULT_TOOL = "sourcebind_demo_update"
 DEMO_CUSTOMERS = {"nw-41": "Northwind (fictional)", "nw-42": "Northwind (fictional)", "ct-91": "Contoso (fictional)"}
 USAGE = (
-    "Usage: /sourcebind bind <job> <source.json> [protected_tool]\n"
+    "Usage: /sourcebind bind <job> <source.json> [protected_tool] [id-only]\n"
     "       /sourcebind status\n"
     "       /sourcebind clear"
 )
@@ -57,7 +57,8 @@ def register(ctx):
             "scope_id": scope_id(session_id),
             "binding": None,
             "current": None,
-            "next_step": "Set an explicit binding with /sourcebind bind <job> <source.json> [protected_tool].",
+            "expected_args": None,
+            "next_step": "Set an explicit binding with /sourcebind bind <job> <source.json> [protected_tool] [id-only].",
         }
         if not session_id:
             result.update(
@@ -89,13 +90,15 @@ def register(ctx):
                 error=f"Selected source job {record['job']!r} differs from bound job {binding['job']!r}.",
                 next_step=(
                     f"Restore the selected source job to {binding['job']!r}, "
-                    "or explicitly select the new job with /sourcebind bind <job> <source.json> [protected_tool]."
+                    "or explicitly select the new job with /sourcebind bind <job> <source.json> [protected_tool] [id-only]."
                 ),
             )
             return result
+        expected_args = record if binding.get("check_job_arg", True) else {"customer_id": record["customer_id"]}
         result.update(
             status="ready",
-            next_step=f"Call {binding['protected_tool']} with {json.dumps(record, ensure_ascii=False)}. Read sourcebind_current again after a source change.",
+            expected_args=expected_args,
+            next_step=f"Call {binding['protected_tool']} with {json.dumps(expected_args, ensure_ascii=False)}. Add other required tool arguments from your task. Read sourcebind_current again after a source change.",
         )
         return result
 
@@ -108,6 +111,8 @@ def register(ctx):
             )
         if result["current"]:
             lines.extend([f"Current job: {result['current']['job']}", f"Current customer_id: {result['current']['customer_id']}"])
+        if result["expected_args"]:
+            lines.append("Expected tool args: " + json.dumps(result["expected_args"], ensure_ascii=False))
         if result.get("error"):
             lines.append(result["error"])
         lines.append("Next: " + result["next_step"])
@@ -130,12 +135,16 @@ def register(ctx):
                 ctx.state.set("binding", None)
                 return "SourceBind binding cleared.\n" + display(view(session_id))
             return display(view(session_id))
-        if action != "bind" or len(parts) not in (3, 4):
+        if action != "bind" or len(parts) not in (3, 4, 5):
+            return USAGE
+        if len(parts) == 5 and parts[4] != "id-only":
+            return USAGE
+        if len(parts) == 4 and parts[3] == "id-only":
             return USAGE
         if not session_id:
             return display(view(session_id))
         job, source_arg = parts[1:3]
-        tool = parts[3] if len(parts) == 4 else DEFAULT_TOOL
+        tool = parts[3] if len(parts) >= 4 else DEFAULT_TOOL
         if not job.strip():
             return "SourceBind bind failed: job requires a nonempty string.\n" + USAGE
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", tool) or tool == "sourcebind_current":
@@ -147,7 +156,10 @@ def register(ctx):
             return f"SourceBind bind failed: selected source read failed: {exc}\n{USAGE}"
         if record["job"] != job:
             return f"SourceBind bind failed: selected source job is {record['job']!r}; requested job is {job!r}.\n{USAGE}"
-        ctx.state.set("binding", {"scope_id": scope_id(session_id), "job": job, "source": source, "protected_tool": tool})
+        ctx.state.set("binding", {
+            "scope_id": scope_id(session_id), "job": job, "source": source,
+            "protected_tool": tool, "check_job_arg": len(parts) != 5,
+        })
         return "SourceBind binding set.\n" + display(view(session_id))
 
     def current(args, *, session_id="", **kwargs):
@@ -192,15 +204,15 @@ def register(ctx):
         result = view(session_id)
         if result["status"] != "ready":
             return {"action": "block", "message": display(result)}
-        expected = result["current"]
-        if not isinstance(args, dict) or any(args.get(field) != expected[field] for field in ("job", "customer_id")):
-            received = {field: args.get(field) for field in ("job", "customer_id")} if isinstance(args, dict) else args
+        expected = result["expected_args"]
+        if not isinstance(args, dict) or any(args.get(field) != value for field, value in expected.items()):
+            received = {field: args.get(field) for field in expected} if isinstance(args, dict) else args
             return {
                 "action": "block",
                 "message": (
-                    f"SourceBind blocked {tool_name} in scope {result['scope_id']}: wrong job or stale/wrong customer_id. "
+                    f"SourceBind blocked {tool_name} in scope {result['scope_id']}: wrong current-source arguments. "
                     f"Expected current {json.dumps(expected, ensure_ascii=False)}; received {json.dumps(received, ensure_ascii=False)}. "
-                    "Read sourcebind_current and retry with its current job/customer_id."
+                    "Read sourcebind_current and retry with its expected_args."
                 ),
             }
         return None
@@ -214,7 +226,7 @@ def register(ctx):
         handler=current,
         schema={
             "name": "sourcebind_current",
-            "description": "Read this scope's binding and current selected JSON job/customer_id. Read-only; follow next_step after a block or source change.",
+            "description": "Read this scope's binding, current selected JSON job/customer_id, and expected tool args. Read-only; follow next_step after a block or source change.",
             "parameters": {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
         },
     )

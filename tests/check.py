@@ -79,10 +79,12 @@ class SourceBindChecks(unittest.TestCase):
     def write_source(self, job="northwind-renewal", customer_id="nw-41"):
         self.source.write_text(json.dumps({"job": job, "customer_id": customer_id}), encoding="utf-8")
 
-    def bind(self, tool=None, session=None):
+    def bind(self, tool=None, session=None, id_only=False):
         args = ["bind", "northwind-renewal", str(self.source)]
         if tool:
             args.append(tool)
+        if id_only:
+            args.append("id-only")
         return self.command(shlex.join(args), session_id=session or self.session)
 
     def current(self, session=None, **kwargs):
@@ -108,7 +110,7 @@ class SourceBindChecks(unittest.TestCase):
         self.assertEqual(plugin.read_source(PLUGIN_ROOT / "examples/current-customer.json"), {"job": "northwind-renewal", "customer_id": "nw-41"})
         manifest = (PLUGIN_ROOT / "plugin.yaml").read_text(encoding="utf-8")
         self.assertIn("name: sourcebind\n", manifest)
-        self.assertIn("version: 0.1.1\n", manifest)
+        self.assertIn("version: 0.1.2\n", manifest)
 
     def test_bind_status_read_only_and_clear_lifecycle(self):
         self.assertEqual(self.current()["status"], "unbound")
@@ -193,6 +195,89 @@ class SourceBindChecks(unittest.TestCase):
         self.bind()
         self.assertEqual(self.current()["binding"]["protected_tool"], "sourcebind_demo_update")
         self.assertIsNone(self.guard(wrong, tool="crm_update"))
+
+    def test_default_mode_and_legacy_binding_check_both_arguments(self):
+        self.bind()
+        self.assertTrue(self.ctx.state.get("binding")["check_job_arg"])
+        expected = {"job": "northwind-renewal", "customer_id": "nw-41"}
+        self.assertEqual(self.current()["expected_args"], expected)
+        self.assertIsNone(self.guard(expected))
+        self.assertEqual(self.guard({"customer_id": "nw-41"})["action"], "block")
+        self.assertEqual(self.guard({"job": "other-job", "customer_id": "nw-41"})["action"], "block")
+
+        legacy = self.ctx.state.get("binding")
+        legacy.pop("check_job_arg")
+        self.ctx = Context(State({"binding": legacy}))
+        plugin.register(self.ctx)
+        self.command = self.ctx.commands["sourcebind"]
+        self.assertEqual(self.current()["expected_args"], expected)
+        self.assertIsNone(self.guard(expected))
+        self.assertEqual(self.guard({"customer_id": "nw-41"})["action"], "block")
+        self.assertEqual(self.guard({"job": "other-job", "customer_id": "nw-41"})["action"], "block")
+
+    def test_id_only_checks_current_customer_in_one_native_scope_and_tool(self):
+        self.assertIn("binding set", self.bind(tool="cashdesk_reply", id_only=True))
+        self.assertFalse(self.ctx.state.get("binding")["check_job_arg"])
+        correct = {"customer_id": "nw-41", "text": "The customer disputes the invoice."}
+        wrong = dict(correct, customer_id="ct-91")
+        self.assertIsNone(self.guard(correct, tool="cashdesk_reply"))
+        blocked = self.guard(wrong, tool="cashdesk_reply")
+        self.assertEqual(blocked["action"], "block")
+        self.assertIn('Expected current {"customer_id": "nw-41"}', blocked["message"])
+        self.assertIn('received {"customer_id": "ct-91"}', blocked["message"])
+        self.assertNotIn('"job":', blocked["message"])
+        self.assertIsNone(self.guard(wrong, tool="cashdesk_hold"))
+        self.assertIsNone(self.guard(wrong, tool="cashdesk_reply", session="independent"))
+        self.ctx.hooks["subagent_start"](parent_session_id=self.session, child_session_id="native-child")
+        self.ctx.hooks["post_compaction"](old_session_id="native-child", session_id="native-child-rotated")
+        self.assertEqual(self.guard(wrong, tool="cashdesk_reply", session="native-child-rotated")["action"], "block")
+        self.write_source(customer_id="ct-91")
+        self.assertEqual(self.guard(correct, tool="cashdesk_reply")["action"], "block")
+        self.assertIsNone(self.guard(wrong, tool="cashdesk_reply"))
+
+    def test_id_only_source_job_and_read_failures_stop_calls(self):
+        self.bind(tool="cashdesk_reply", id_only=True)
+        binding = self.ctx.state.get("binding")
+        args = {"customer_id": "nw-41", "text": "The customer's reply."}
+        self.write_source(job="other-job")
+        result = self.current()
+        self.assertEqual(result["status"], "blocked")
+        self.assertIsNone(result["expected_args"])
+        self.assertIn("differs from bound job", result["error"])
+        self.assertEqual(self.guard(args, tool="cashdesk_reply")["action"], "block")
+        self.assertEqual(self.ctx.state.get("binding"), binding)
+        for bad in ('{broken', '{"customer_id":"nw-41"}'):
+            with self.subTest(source=bad):
+                self.source.write_text(bad, encoding="utf-8")
+                self.assertEqual(self.current()["status"], "blocked")
+                self.assertEqual(self.guard(args, tool="cashdesk_reply")["action"], "block")
+        self.source.unlink()
+        self.assertEqual(self.guard(args, tool="cashdesk_reply")["action"], "block")
+        self.write_source()
+        self.assertEqual(self.current()["status"], "ready")
+        self.assertIsNone(self.guard(args, tool="cashdesk_reply"))
+        self.assertEqual(self.ctx.state.get("binding"), binding)
+
+    def test_id_only_guidance_and_explicit_mode_syntax(self):
+        self.bind(tool="cashdesk_reply", id_only=True)
+        result = self.current()
+        self.assertEqual(result["current"], {"job": "northwind-renewal", "customer_id": "nw-41"})
+        self.assertEqual(result["expected_args"], {"customer_id": "nw-41"})
+        self.assertIn('Call cashdesk_reply with {"customer_id": "nw-41"}.', result["next_step"])
+        self.assertNotIn('"job":', result["next_step"])
+        context = self.ctx.hooks["pre_llm_call"](session_id=self.session)["context"]
+        injected = json.loads(context.split(": ", 1)[1])
+        self.assertEqual(injected["expected_args"], result["expected_args"])
+        self.assertEqual(injected["next_step"], result["next_step"])
+        before = self.ctx.state.get("binding")
+        for suffix in (["id-only"], ["cashdesk_reply", "ID-ONLY"], ["cashdesk_reply", "id-only", "extra"]):
+            with self.subTest(suffix=suffix):
+                raw = shlex.join(["bind", "northwind-renewal", str(self.source)] + suffix)
+                self.assertIn("Usage:", self.command(raw, session_id=self.session))
+                self.assertEqual(self.ctx.state.get("binding"), before)
+        self.bind(tool="cashdesk_reply")
+        self.assertTrue(self.ctx.state.get("binding")["check_job_arg"])
+        self.assertEqual(self.current()["expected_args"], result["current"])
 
     def test_delegation_compaction_and_reloaded_state_keep_stable_scope(self):
         self.bind()
