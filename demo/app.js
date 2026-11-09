@@ -37,12 +37,14 @@
   function evidenceResult(raw) {
     const value = parse(raw);
     if (!isObject(value)) return value;
-    const clean = pick(value, ["ok", "demo", "updated_customer", "scope_id", "binding_status", "status", "next_step", "error", "message", "action"]);
-    if (isObject(value.binding)) clean.binding = pick(value.binding, ["scope_id", "job", "source", "protected_tool"]);
-    else if (Object.hasOwn(value, "binding")) clean.binding = value.binding;
+    const clean = pick(value, ["ok", "demo", "updated_customer", "status", "binding_status", "error", "message", "action"]);
+    // Business identity comes first; native scope/path metadata stays inspectable below.
     if (isObject(value.current)) clean.current = pick(value.current, ["job", "customer_id"]);
     else if (Object.hasOwn(value, "current")) clean.current = value.current;
     if (isObject(value.record)) clean.record = pick(value.record, ["customer_id", "name", "job"]);
+    if (isObject(value.binding)) clean.binding = pick(value.binding, ["scope_id", "job", "source", "protected_tool"]);
+    else if (Object.hasOwn(value, "binding")) clean.binding = value.binding;
+    Object.assign(clean, pick(value, ["scope_id", "next_step"]));
     return clean;
   }
 
@@ -77,7 +79,7 @@
     const current = selected || view && view.current;
     $("source-job").textContent = current && current.job || "—";
     $("source-id").textContent = current && current.customer_id || "—";
-    $("source-provenance").textContent = selected ? "Recorded fixture source" : current ? "Recorded current view" : "Awaiting recording";
+    $("source-provenance").textContent = selected ? "Recorded pre-turn source" : current ? "Recorded current view" : "Awaiting recording";
     const update = stage && Array.isArray(stage.calls) ? [...stage.calls].reverse().find((call) => call.tool === "sourcebind_demo_update" && Object.hasOwn(call, "result")) : null;
     const updateResult = update && parse(update.result);
     const bindingState = view && Object.hasOwn(view, "binding") ? view.binding ? "bound" : view.status === "unbound" ? "unbound" : null : isObject(updateResult) ? updateResult.binding_status : null;

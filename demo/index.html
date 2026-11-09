@@ -15,6 +15,7 @@
       <a class="wordmark" href="https://github.com/blucca/hermes-sourcebind" aria-label="SourceBind on GitHub"><span class="bind-mark" aria-hidden="true"></span>SourceBind</a>
       <span class="edition">Recorded native run</span>
       <nav class="page-links" aria-label="Page links">
+        <a href="#film">Watch</a>
         <a href="#install">Install</a>
         <a href="https://github.com/blucca/hermes-sourcebind">GitHub</a>
       </nav>
@@ -26,7 +27,17 @@
         <p>Two valid IDs. One current job. <br>Bind the source to the tool’s actual arguments.</p>
       </section>
 
-      <section class="recording" aria-label="Recorded native demonstration">
+      <section class="film" id="film" aria-label="Native demonstration film">
+        <div class="film-heading"><h2>Watch the native run.</h2><a href="#recording">Inspect the recorded calls</a></div>
+        <video id="native-film" controls playsinline preload="metadata" poster="./cover-video.jpg" width="1920" height="1080" aria-label="SourceBind recorded native demonstration">
+          <source src="./sourcebind-demo.mp4" type="video/mp4">
+          <track kind="captions" src="./sourcebind-demo.vtt" srclang="en" label="English">
+          <a href="./sourcebind-demo.mp4">Download the demonstration.</a>
+        </video>
+        <p class="film-links"><a href="./sourcebind-demo.mp4" download>Download the 71-second film</a><a href="./x-post.txt">X post text</a><span>Fictional records. Real native calls. Synthesized narration.</span></p>
+      </section>
+
+      <section class="recording" id="recording" aria-label="Recorded native demonstration">
         <div class="stage-tabs" role="tablist" aria-label="Native run stage">
           <button class="stage-tab" type="button" role="tab" id="tab-0" aria-controls="stage-panel" aria-selected="true" tabindex="0" data-stage="0"><span class="stage-key">1</span><span>Unbound baseline</span></button>
           <button class="stage-tab" type="button" role="tab" id="tab-1" aria-controls="stage-panel" aria-selected="false" tabindex="-1" data-stage="1"><span class="stage-key">2</span><span>Bound current source</span></button>

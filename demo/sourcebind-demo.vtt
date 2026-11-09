@@ -1,0 +1,46 @@
+WEBVTT
+
+00:00:00.600 --> 00:00:04.546
+This is a recorded native Hermes run with fictional customers.
+
+00:00:04.566 --> 00:00:06.551
+It uses public hooks.
+
+00:00:06.571 --> 00:00:10.368
+Model tool calls and forced boundary checks are shown separately.
+
+00:00:12.368 --> 00:00:16.281
+First, the unbound Northwind job updates Contoso.
+
+00:00:16.301 --> 00:00:21.800
+That customer ID is valid, so the tool returns success while the business target is wrong.
+
+00:00:23.800 --> 00:00:26.298
+Bind the job to its current JSON.
+
+00:00:26.318 --> 00:00:29.130
+A forced wrong-customer call is blocked.
+
+00:00:29.150 --> 00:00:33.376
+The native model reads SourceBind’s current record and updates Northwind.
+
+00:00:35.376 --> 00:00:40.547
+Now Northwind’s source changes from N W forty-one to N W forty-two.
+
+00:00:40.567 --> 00:00:44.904
+The old ID is blocked; reading the current source supplies the new one.
+
+00:00:46.904 --> 00:00:49.797
+A broken source blocks the protected update.
+
+00:00:49.817 --> 00:00:54.632
+Repairing the JSON restores a ready current read while preserving the existing binding.
+
+00:00:56.632 --> 00:01:00.078
+Install SourceBind through Hermes’s plugin command.
+
+00:01:00.098 --> 00:01:06.374
+The public repository includes the MIT source, the native demo, and the recorded results.
+
+00:01:06.394 --> 00:01:08.848
+Read the installation disclosures there.

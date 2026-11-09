@@ -106,6 +106,10 @@ The plugin uses public registration and state APIs.
 
 ## Native demonstration
 
+[Watch the 71-second film](https://blucca.github.io/hermes-sourcebind/demo/#film)
+or [download the MP4](demo/sourcebind-demo.mp4). The film includes English
+captions and synthesized narration.
+
 [Open the recorded native run](https://blucca.github.io/hermes-sourcebind/demo/)
 — fictional customers, real Hermes tool calls.
 

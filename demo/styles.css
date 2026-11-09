@@ -35,6 +35,14 @@ h1, h2, h3, h4, p, dl, dd { margin: 0; }
 .opening { display: grid; grid-template-columns: 1.7fr 1fr; gap: 48px; align-items: end; padding: 62px 0 52px; }
 .opening h1 { font: 700 clamp(46px, 5.7vw, 82px)/.99 var(--display); letter-spacing: -2.4px; }
 .opening p { padding-bottom: 5px; max-width: 290px; font-size: 18px; line-height: 1.55; }
+.film { margin-bottom: 52px; }
+.film-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.film-heading h2 { font-size: 20px; letter-spacing: -.35px; }
+.film-heading a { font-size: 13px; }
+.film video { display: block; width: 100%; height: auto; border: 1px solid var(--ink); background: var(--ink); }
+.film-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 25px; margin-top: 15px; font-size: 12px; color: var(--muted); }
+.film-links a { color: var(--ink); }
+.film-links span { margin-left: auto; }
 .stage-tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
 .stage-tab { position: relative; display: flex; gap: 14px; align-items: center; border: 0; background: transparent; color: var(--muted); text-align: left; padding: 21px 20px; font-size: 16px; font-weight: 600; }
 .stage-tab + .stage-tab { border-left: 1px solid var(--rule); }
@@ -149,6 +157,11 @@ footer a { margin-left: auto; }
 }
 
 @media (max-width: 620px) {
+  .film { margin-bottom: 34px; }
+  .film-heading { display: block; }
+  .film-heading h2 { font-size: 19px; }
+  .film-heading a { display: inline-block; margin-top: 8px; }
+  .film-links span { width: 100%; margin-left: 0; }
   .page { padding: 0 20px; }
   .masthead { min-height: 91px; gap: 10px; flex-wrap: wrap; align-content: center; padding: 13px 0; }
   .wordmark { font-size: 22px; }
