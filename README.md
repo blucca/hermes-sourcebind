@@ -62,7 +62,8 @@ The model-callable read interface is `sourcebind_current`; the other plugin
 tool updates the fictional fixture. Binding changes use the user slash command.
 
 For a source rollover, edit `customer_id` while keeping `job` unchanged. For
-example, change `nw-41` to the other valid fixture ID, `ct-91`. The guard rereads
+example, change Northwind’s current reference from `nw-41` to the also-valid
+`nw-42`. The separate `ct-91` record belongs to Contoso. The guard rereads
 the file at every protected call: the old ID is blocked and the new current ID
 passes. A read, UTF-8, JSON, field-validation, or source-job failure blocks the
 selected tool. Repairing the file restores the existing binding; choosing a

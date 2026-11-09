@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 DEFAULT_TOOL = "sourcebind_demo_update"
-DEMO_CUSTOMERS = {"nw-41": "Northwind (fictional)", "ct-91": "Contoso (fictional)"}
+DEMO_CUSTOMERS = {"nw-41": "Northwind (fictional)", "nw-42": "Northwind (fictional)", "ct-91": "Contoso (fictional)"}
 USAGE = (
     "Usage: /sourcebind bind <job> <source.json> [protected_tool]\n"
     "       /sourcebind status\n"
@@ -158,7 +158,7 @@ def register(ctx):
             return json.dumps({"error": "Fictional update requires a nonempty string job."})
         customer_id = args.get("customer_id")
         if not isinstance(customer_id, str) or customer_id not in DEMO_CUSTOMERS:
-            return json.dumps({"error": "Unknown fictional customer_id. Valid demo IDs: nw-41, ct-91."})
+            return json.dumps({"error": "Unknown fictional customer_id. Valid demo IDs: nw-41, nw-42, ct-91."})
         records = ctx.state.get("demo_records", default={})
         record = {
             "customer_id": customer_id,
@@ -229,7 +229,7 @@ def register(ctx):
                 "type": "object",
                 "properties": {
                     "job": {"type": "string", "description": "The exact job from sourcebind_current."},
-                    "customer_id": {"type": "string", "description": "The current selected customer_id; demo IDs are nw-41 and ct-91."},
+                    "customer_id": {"type": "string", "description": "The current selected customer_id; demo IDs are nw-41, nw-42 and ct-91."},
                 },
                 "required": ["job", "customer_id"],
                 "additionalProperties": False,

@@ -13,7 +13,7 @@ import shlex
 import sys
 
 
-def observed_calls(messages):
+def observed_native_calls(messages):
     calls, by_id = [], {}
     for message in messages:
         for call in message.get("tool_calls") or []:
@@ -29,6 +29,30 @@ def observed_calls(messages):
                 result = content
             by_id[message["tool_call_id"]]["result"] = result
     return calls
+
+
+def observed_calls(messages):
+    """Resolve stock v0.23 single tool_call envelopes for the business readout.
+
+    The native agent splits local batches into single messages before recording.
+    Connector batching has a separate result schema and is outside this demo.
+    """
+    resolved = []
+    for call in observed_native_calls(messages):
+        if call["tool"] == "tool_call":
+            requests = call["args"].get("calls", [])
+            assert len(requests) == 1, "Expected the stock single local tool_call envelope."
+            request = requests[0]
+            arguments = request["arguments"]
+            if isinstance(arguments, str):
+                arguments = json.loads(arguments)
+            item = {"tool": request["name"], "args": arguments,
+                    "result": call.get("result"), "native_transport": "tool_call"}
+        else:
+            item = call
+        if item["tool"] in {"sourcebind_current", "sourcebind_demo_update"}:
+            resolved.append(item)
+    return resolved
 
 
 def main():
@@ -57,7 +81,7 @@ def main():
 
     def forced_call(agent, customer_id, job="northwind-renewal"):
         return json.loads(handle_function_call(
-            "sourcebind_demo_update", {"job": job, "customer_id": customer_id},
+            "tool_call", {"calls": [{"name": "sourcebind_demo_update", "arguments": {"job": job, "customer_id": customer_id}}]},
             session_id=agent.session_id, task_id=agent.session_id,
         ))
 
@@ -68,14 +92,17 @@ def main():
         skip_memory=True, skip_background_review=True, skip_context_files=True,
         quiet_mode=True, pass_session_id=True, platform="cli",
     )
-    result = {"plugin_version": "0.1.0", "fixture": "fictional customers", "stages": []}
+    result = {"plugin_version": "0.1.1", "fixture": "fictional customers", "stages": []}
 
     def turn(label, prompt):
+        selected_source = json.loads(source.read_text())
         response = agent.run_conversation(prompt, conversation_history=[])
         calls = observed_calls(response.get("messages", []))
         stage = {"label": label, "session_id": agent.session_id, "calls": calls,
                  "final": response.get("final_response", ""),
-                 "turn_exit_reason": response.get("turn_exit_reason")}
+                 "turn_exit_reason": response.get("turn_exit_reason"),
+                 "selected_source": selected_source,
+                 "native_calls": observed_native_calls(response.get("messages", []))}
         result["stages"].append(stage)
         print(json.dumps(stage, ensure_ascii=False), flush=True)
         # Save each independent step so an interrupted demo can be inspected.
@@ -113,7 +140,7 @@ def main():
                    and isinstance(call.get("result"), dict) and call["result"].get("ok")
                    for call in current), "The model did not complete the bound current-source update."
 
-        select("ct-91")
+        select("nw-42")
         result["blocked_stale_source"] = forced_call(agent, "nw-41")
         assert "error" in result["blocked_stale_source"]
         rollover = turn("source rollover model update", (
@@ -122,12 +149,12 @@ def main():
             "Report the updated ID."
         ))
         assert any(call["tool"] == "sourcebind_demo_update"
-                   and call["args"].get("customer_id") == "ct-91"
+                   and call["args"].get("customer_id") == "nw-42"
                    and isinstance(call.get("result"), dict) and call["result"].get("ok")
                    for call in rollover), "The model did not pick up the current-source rollover."
 
         source.write_text("{invalid JSON\n")
-        result["blocked_broken_source"] = forced_call(agent, "ct-91")
+        result["blocked_broken_source"] = forced_call(agent, "nw-42")
         assert "error" in result["blocked_broken_source"]
         select("nw-41")
         result["restored_current"] = json.loads(handle_function_call(

@@ -108,7 +108,7 @@ class SourceBindChecks(unittest.TestCase):
         self.assertEqual(plugin.read_source(PLUGIN_ROOT / "examples/current-customer.json"), {"job": "northwind-renewal", "customer_id": "nw-41"})
         manifest = (PLUGIN_ROOT / "plugin.yaml").read_text(encoding="utf-8")
         self.assertIn("name: sourcebind\n", manifest)
-        self.assertIn("version: 0.1.0\n", manifest)
+        self.assertIn("version: 0.1.1\n", manifest)
 
     def test_bind_status_read_only_and_clear_lifecycle(self):
         self.assertEqual(self.current()["status"], "unbound")

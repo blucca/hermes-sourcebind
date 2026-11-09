@@ -1,5 +1,5 @@
 name: sourcebind
-version: 0.1.0
+version: 0.1.1
 description: Bind one explicit job and current local JSON customer ID at a native tool's execution boundary.
 author: blucca
 requires_hermes: ">=0.23.0"
