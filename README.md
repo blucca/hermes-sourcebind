@@ -106,6 +106,10 @@ The plugin uses public registration and state APIs.
 
 ## Native demonstration
 
+[Open the recorded native run](https://blucca.github.io/hermes-sourcebind/demo/)
+— fictional customers, real Hermes tool calls.
+
+
 The standalone `examples/native-demo.py` harness runs a real Hermes agent and
 its native tool dispatcher. It uses your configured model, creates a fictional
 source under `--output-dir`, and saves each observed step as `native-demo.json`.
@@ -124,7 +128,17 @@ use the configured model. The harness imports Hermes core for the demonstration;
 the plugin entrypoint extends Hermes through the public `ctx` APIs.
 
 Standard-library checks: `python3 tests/check.py` — 12 checks pass. Current
-Hermes v0.23.0 validation passes, including the safe install scan. Native model
-run results will be published after the observed run.
+Hermes v0.23.0 validation passes, including the safe install scan. The observed
+v0.1.1 native model run is saved in [demo/native-demo.json](demo/native-demo.json):
+
+- Unbound: valid `ct-91` updates Contoso for the Northwind job.
+- Bound: wrong customer/job calls stop; the model reads the selected source and
+  updates `nw-41`.
+- Source rollover: old `nw-41` stops; the model refreshes and updates `nw-42`.
+- Broken JSON stops the protected call; repairing it restores a ready read.
+
+The stock model uses discovery `tool_call` envelopes. The readout resolves the
+actual business calls and retains the native envelopes alongside them. Forced
+boundary checks and model calls are recorded separately.
 
 AI-led development: Codex / blucca. Source and documentation: [MIT](LICENSE).

@@ -1,0 +1,352 @@
+{
+  "plugin_version": "0.1.1",
+  "fixture": "fictional customers",
+  "stages": [
+    {
+      "label": "unbound valid wrong customer",
+      "session_id": "20261109_013522_19154b",
+      "calls": [
+        {
+          "tool": "sourcebind_demo_update",
+          "args": {
+            "job": "northwind-renewal",
+            "customer_id": "ct-91"
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "ct-91",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "unbound",
+            "record": {
+              "customer_id": "ct-91",
+              "name": "Contoso (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          },
+          "native_transport": "tool_call"
+        }
+      ],
+      "final": "Updated customer ID: **ct-91**",
+      "turn_exit_reason": "text_response(finish_reason=stop)",
+      "selected_source": {
+        "job": "northwind-renewal",
+        "customer_id": "nw-41"
+      },
+      "native_calls": [
+        {
+          "tool": "tool_search",
+          "args": {
+            "queries": [
+              "sourcebind demo update customer"
+            ]
+          },
+          "result": {
+            "queries": [
+              "sourcebind demo update customer"
+            ],
+            "total_available": 2,
+            "results": [
+              {
+                "query": "sourcebind demo update customer",
+                "matches": [
+                  "sourcebind_demo_update"
+                ]
+              }
+            ],
+            "tools": {
+              "sourcebind_demo_update": {
+                "source": "plugin",
+                "source_name": "sourcebind",
+                "description": "Update a fictional local customer record. Both nw-41 and ct-91 are valid; SourceBind guards the selected job/current ID after explicit binding. No network or payment.",
+                "required": [
+                  "job",
+                  "customer_id"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "tool": "tool_call",
+          "args": {
+            "calls": [
+              {
+                "name": "sourcebind_demo_update",
+                "arguments": {
+                  "job": "northwind-renewal",
+                  "customer_id": "ct-91"
+                }
+              }
+            ]
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "ct-91",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "unbound",
+            "record": {
+              "customer_id": "ct-91",
+              "name": "Contoso (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          }
+        }
+      ]
+    },
+    {
+      "label": "bound current-source model update",
+      "session_id": "20261109_013522_19154b",
+      "calls": [
+        {
+          "tool": "sourcebind_current",
+          "args": {},
+          "result": {
+            "status": "ready",
+            "scope_id": "20261109_013522_19154b",
+            "binding": {
+              "scope_id": "20261109_013522_19154b",
+              "job": "northwind-renewal",
+              "source": "/workspace/gain/temp/round502/native-v011/native-demo/current-customer.json",
+              "protected_tool": "sourcebind_demo_update"
+            },
+            "current": {
+              "job": "northwind-renewal",
+              "customer_id": "nw-41"
+            },
+            "next_step": "Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current again after a source change."
+          },
+          "native_transport": "tool_call"
+        },
+        {
+          "tool": "sourcebind_demo_update",
+          "args": {
+            "customer_id": "nw-41",
+            "job": "northwind-renewal"
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "nw-41",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "bound",
+            "record": {
+              "customer_id": "nw-41",
+              "name": "Northwind (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          },
+          "native_transport": "tool_call"
+        }
+      ],
+      "final": "Updated customer ID: **nw-41**",
+      "turn_exit_reason": "text_response(finish_reason=stop)",
+      "selected_source": {
+        "job": "northwind-renewal",
+        "customer_id": "nw-41"
+      },
+      "native_calls": [
+        {
+          "tool": "tool_call",
+          "args": {
+            "calls": [
+              {
+                "name": "sourcebind_current",
+                "arguments": {}
+              }
+            ]
+          },
+          "result": {
+            "status": "ready",
+            "scope_id": "20261109_013522_19154b",
+            "binding": {
+              "scope_id": "20261109_013522_19154b",
+              "job": "northwind-renewal",
+              "source": "/workspace/gain/temp/round502/native-v011/native-demo/current-customer.json",
+              "protected_tool": "sourcebind_demo_update"
+            },
+            "current": {
+              "job": "northwind-renewal",
+              "customer_id": "nw-41"
+            },
+            "next_step": "Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current again after a source change."
+          }
+        },
+        {
+          "tool": "tool_call",
+          "args": {
+            "calls": [
+              {
+                "arguments": {
+                  "customer_id": "nw-41",
+                  "job": "northwind-renewal"
+                },
+                "name": "sourcebind_demo_update"
+              }
+            ]
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "nw-41",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "bound",
+            "record": {
+              "customer_id": "nw-41",
+              "name": "Northwind (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          }
+        }
+      ]
+    },
+    {
+      "label": "source rollover model update",
+      "session_id": "20261109_013522_19154b",
+      "calls": [
+        {
+          "tool": "sourcebind_current",
+          "args": {},
+          "result": {
+            "status": "ready",
+            "scope_id": "20261109_013522_19154b",
+            "binding": {
+              "scope_id": "20261109_013522_19154b",
+              "job": "northwind-renewal",
+              "source": "/workspace/gain/temp/round502/native-v011/native-demo/current-customer.json",
+              "protected_tool": "sourcebind_demo_update"
+            },
+            "current": {
+              "job": "northwind-renewal",
+              "customer_id": "nw-42"
+            },
+            "next_step": "Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-42\"}. Read sourcebind_current again after a source change."
+          },
+          "native_transport": "tool_call"
+        },
+        {
+          "tool": "sourcebind_demo_update",
+          "args": {
+            "customer_id": "nw-42",
+            "job": "northwind-renewal"
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "nw-42",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "bound",
+            "record": {
+              "customer_id": "nw-42",
+              "name": "Northwind (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          },
+          "native_transport": "tool_call"
+        }
+      ],
+      "final": "Updated ID: **nw-42**",
+      "turn_exit_reason": "text_response(finish_reason=stop)",
+      "selected_source": {
+        "job": "northwind-renewal",
+        "customer_id": "nw-42"
+      },
+      "native_calls": [
+        {
+          "tool": "tool_call",
+          "args": {
+            "calls": [
+              {
+                "name": "sourcebind_current",
+                "arguments": {}
+              }
+            ]
+          },
+          "result": {
+            "status": "ready",
+            "scope_id": "20261109_013522_19154b",
+            "binding": {
+              "scope_id": "20261109_013522_19154b",
+              "job": "northwind-renewal",
+              "source": "/workspace/gain/temp/round502/native-v011/native-demo/current-customer.json",
+              "protected_tool": "sourcebind_demo_update"
+            },
+            "current": {
+              "job": "northwind-renewal",
+              "customer_id": "nw-42"
+            },
+            "next_step": "Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-42\"}. Read sourcebind_current again after a source change."
+          }
+        },
+        {
+          "tool": "tool_call",
+          "args": {
+            "calls": [
+              {
+                "arguments": {
+                  "customer_id": "nw-42",
+                  "job": "northwind-renewal"
+                },
+                "name": "sourcebind_demo_update"
+              }
+            ]
+          },
+          "result": {
+            "ok": true,
+            "demo": true,
+            "updated_customer": "nw-42",
+            "scope_id": "20261109_013522_19154b",
+            "binding_status": "bound",
+            "record": {
+              "customer_id": "nw-42",
+              "name": "Northwind (fictional)",
+              "job": "northwind-renewal",
+              "updates": 1
+            },
+            "next_step": "Fictional update recorded locally. Read sourcebind_current for the current binding."
+          }
+        }
+      ]
+    }
+  ],
+  "binding": "SourceBind binding set.\nSourceBind READY\nScope: 20261109_013522_19154b\nBound job: northwind-renewal\nProtected tool: sourcebind_demo_update\nSource: /workspace/gain/temp/round502/native-v011/native-demo/current-customer.json\nCurrent job: northwind-renewal\nCurrent customer_id: nw-41\nNext: Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current again after a source change.",
+  "blocked_wrong_customer": {
+    "error": "SourceBind blocked sourcebind_demo_update in scope 20261109_013522_19154b: wrong job or stale/wrong customer_id. Expected current {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}; received {\"job\": \"northwind-renewal\", \"customer_id\": \"ct-91\"}. Read sourcebind_current and retry with its current job/customer_id."
+  },
+  "blocked_wrong_job": {
+    "error": "SourceBind blocked sourcebind_demo_update in scope 20261109_013522_19154b: wrong job or stale/wrong customer_id. Expected current {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}; received {\"job\": \"contoso-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current and retry with its current job/customer_id."
+  },
+  "blocked_stale_source": {
+    "error": "SourceBind blocked sourcebind_demo_update in scope 20261109_013522_19154b: wrong job or stale/wrong customer_id. Expected current {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-42\"}; received {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current and retry with its current job/customer_id."
+  },
+  "blocked_broken_source": {
+    "error": "SourceBind BLOCKED\nScope: 20261109_013522_19154b\nBound job: northwind-renewal\nProtected tool: sourcebind_demo_update\nSource: /workspace/gain/temp/round502/native-v011/native-demo/current-customer.json\nSelected source read failed: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\nNext: Repair the selected JSON at /workspace/gain/temp/round502/native-v011/native-demo/current-customer.json, then read sourcebind_current. Use /sourcebind clear to end this scope's binding."
+  },
+  "restored_current": {
+    "status": "ready",
+    "scope_id": "20261109_013522_19154b",
+    "binding": {
+      "scope_id": "20261109_013522_19154b",
+      "job": "northwind-renewal",
+      "source": "/workspace/gain/temp/round502/native-v011/native-demo/current-customer.json",
+      "protected_tool": "sourcebind_demo_update"
+    },
+    "current": {
+      "job": "northwind-renewal",
+      "customer_id": "nw-41"
+    },
+    "next_step": "Call sourcebind_demo_update with {\"job\": \"northwind-renewal\", \"customer_id\": \"nw-41\"}. Read sourcebind_current again after a source change."
+  },
+  "result": "passed: actual native model updates and tool-boundary controls"
+}
