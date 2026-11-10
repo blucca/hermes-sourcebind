@@ -37,6 +37,8 @@ records. Payments and production service calls: **0**.
 
 ## Install
 
+**v0.1.2 is in the [Hermes plugin catalog](https://github.com/NousResearch/hermes-agent/pull/151616).**
+
 Requires **Hermes 0.23.0+**. From this checkout:
 
 ```sh
